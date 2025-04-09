@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cotação e Calculadora WEMIX</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      /* Fundo conforme solicitado */
+      background-image: url('https://lh3.googleusercontent.com/d/1wdPn1l98dwN2wBfCGBeAC0MKtNed1in2');
+      background-size: cover;
+      background-position: top center;
+      background-repeat: no-repeat;
+      color: #fff;
+      text-align: center;
+      padding: 50px 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      background-color: rgba(0, 0, 0, 0.65);
+      display: inline-block;
+      padding: 30px 40px;
+      border-radius: 15px;
+      max-width: 500px;
+    }
+    
+    input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      width: 120px;
+      text-align: center;
+      margin-top: 10px;
+    }
+    
+    h1, h2 {
+      margin-bottom: 20px;
+    }
+    
+    p {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+    
+    ul {
+      text-align: left;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Cotação Atual da WEMIX</h1>
+    <h2 id="cotacao">Carregando...</h2>
+    
+    <h2>Calculadora de Preço</h2>
+    <p>Digite a quantidade de WEMIX:</p>
+    <input type="number" id="quantidade" min="1" value="1" oninput="calcularPreco()">
+    <p id="resultado">Total: R$ --</p>
+    
+    <p><strong>Regras:</strong></p>
+    <ul>
+      <li>1 WEMIX = R$5,00 (preço fixo)</li>
+      <li>Acima de 10 WEMIX = cotação +10%</li>
+      <li>Acima de 40 WEMIX = cotação +5%</li>
+    </ul>
+  </div>
+  
+  <script>
+    let cotacaoAtual = null;
+    
+    async function buscarCotacaoWemix() {
+      try {
+        // Usando o endpoint da CryptoCompare para WEMIX em BRL
+        const resposta = await fetch('https://min-api.cryptocompare.com/data/price?fsym=WEMIX&tsyms=BRL');
+        if (!resposta.ok) {
+          throw new Error("HTTP error " + resposta.status);
+        }
+        const dados = await resposta.json();
+        if (dados.BRL) {
+          cotacaoAtual = dados.BRL;
+          document.getElementById('cotacao').innerText = `R$ ${cotacaoAtual.toFixed(2)}`;
+          calcularPreco();
+        } else {
+          document.getElementById('cotacao').innerText = 'Cotação indisponível.';
+          console.error("Formato de dados inesperado:", dados);
+        }
+      } catch (erro) {
+        document.getElementById('cotacao').innerText = 'Erro ao buscar cotação.';
+        console.error("Erro na requisição:", erro);
+      }
+    }
+    
+    function calcularPreco() {
+      const quantidade = parseFloat(document.getElementById('quantidade').value);
+      if (!cotacaoAtual || isNaN(quantidade)) return;
+    
+      let precoUnitario = 5;
+    
+      if (quantidade >= 40) {
+        precoUnitario = cotacaoAtual * 1.05;
+      } else if (quantidade >= 10) {
+        precoUnitario = cotacaoAtual * 1.10;
+      }
+    
+      const total = precoUnitario * quantidade;
+      document.getElementById('resultado').innerText = `Total: R$ ${total.toFixed(2)}`;
+    }
+    
+    window.onload = buscarCotacaoWemix;
+  </script>
+</body>
+</html>
