@@ -7,7 +7,6 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      /* Fundo conforme solicitado */
       background-image: url('https://lh3.googleusercontent.com/d/13mcKYGZFBEVkIJ2FBCzm1tDKyEXBnuuO');
       background-size: cover;
       background-position: top center;
@@ -36,7 +35,7 @@
       margin-top: 10px;
     }
     
-    h1, h2 {
+    h1, h2, h3 {
       margin-bottom: 20px;
     }
     
@@ -54,12 +53,16 @@
 <body>
   <div class="container">
     <h1>Cotação Atual da WEMIX</h1>
+    <!-- Cotação da WEMIX em BRL -->
     <h2 id="cotacao">Carregando...</h2>
+    <!-- Cotação do USDT em BRL (API Binance) -->
+    <h3 id="cotacaoUSDT">USDT/BRL: Carregando...</h3>
     
     <h2>Calculadora de Preço</h2>
     <p>Digite a quantidade de WEMIX:</p>
     <input type="number" id="quantidade" min="1" value="1" oninput="calcularPreco()">
     <p id="resultado">Total: R$ --</p>
+    <p id="resultadoUsdt">Total em USDT: --</p>
     
     <p><strong>Regras:</strong></p>
     <ul>
@@ -70,11 +73,13 @@
   </div>
   
   <script>
-    let cotacaoAtual = null;
-    
+    // Variáveis globais para as cotações
+    let cotacaoAtual = null;  // Cotação da WEMIX em BRL (CryptoCompare)
+    let binanceRate = null;   // Taxa USDT/BRL (Binance)
+
+    // Busca a cotação da WEMIX em BRL
     async function buscarCotacaoWemix() {
       try {
-        // Usando o endpoint da CryptoCompare para WEMIX em BRL
         const resposta = await fetch('https://min-api.cryptocompare.com/data/price?fsym=WEMIX&tsyms=BRL');
         if (!resposta.ok) {
           throw new Error("HTTP error " + resposta.status);
@@ -90,27 +95,63 @@
         }
       } catch (erro) {
         document.getElementById('cotacao').innerText = 'Erro ao buscar cotação.';
-        console.error("Erro na requisição:", erro);
+        console.error("Erro na requisição WEMIX:", erro);
       }
     }
     
+    // Busca a cotação USDT/BRL via Binance
+    async function buscarCotacaoUSDT() {
+      try {
+        const resposta = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
+        if (!resposta.ok) {
+          throw new Error("HTTP error " + resposta.status);
+        }
+        const dados = await resposta.json();
+        if (dados.price) {
+          binanceRate = parseFloat(dados.price);
+          document.getElementById('cotacaoUSDT').innerText = `USDT/BRL: R$ ${binanceRate.toFixed(2)}`;
+          calcularPreco();
+        } else {
+          document.getElementById('cotacaoUSDT').innerText = 'Cotação USDT indisponível';
+          console.error("Formato de dados inesperado (USDT):", dados);
+        }
+      } catch (erro) {
+        document.getElementById('cotacaoUSDT').innerText = 'Erro ao buscar USDT';
+        console.error("Erro na requisição USDT:", erro);
+      }
+    }
+    
+    // Calcula o preço total com as regras definidas e exibe os resultados em BRL e USDT
     function calcularPreco() {
       const quantidade = parseFloat(document.getElementById('quantidade').value);
       if (!cotacaoAtual || isNaN(quantidade)) return;
-    
-      let precoUnitario = 5;
-    
+
+      let precoUnitario = 5; // preço fixo base em BRL
+      
+      // Regras de ajuste do preço unitário conforme quantidade
       if (quantidade > 40) {
         precoUnitario = cotacaoAtual * 1.05;
       } else if (quantidade > 10) {
         precoUnitario = cotacaoAtual * 1.10;
       }
-    
+      
       const total = precoUnitario * quantidade;
       document.getElementById('resultado').innerText = `Total: R$ ${total.toFixed(2)}`;
+
+      // Converte o total para USDT se a taxa estiver disponível
+      if (binanceRate) {
+        const totalUsdt = total / binanceRate;
+        document.getElementById('resultadoUsdt').innerText = `Total em USDT: ${totalUsdt.toFixed(4)}`;
+      } else {
+        document.getElementById('resultadoUsdt').innerText = 'Total em USDT: --';
+      }
     }
     
-    window.onload = buscarCotacaoWemix;
+    // Ao carregar a página, busca ambas as cotações
+    window.onload = function() {
+      buscarCotacaoWemix();
+      buscarCotacaoUSDT();
+    }
   </script>
 </body>
 </html>
