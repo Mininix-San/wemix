@@ -68,8 +68,8 @@
     <p><strong>Regras:</strong></p>
     <ul>
       <li>1 WEMIX = R$5,00 (preço fixo)</li>
-      <li>Acima de 10 WEMIX = cotação +10%</li>
-      <li>Acima de 40 WEMIX = cotação +5%</li>
+      <li>Acima de 10 WEMIX = cotação +12%</li>
+      <li>Acima de 40 WEMIX = cotação +6%</li>
     </ul>
   </div>
   
@@ -127,7 +127,7 @@
       const quantidade = parseFloat(document.getElementById('quantidade').value);
       if (!cotacaoAtual || isNaN(quantidade)) return;
 
-      let precoUnitario = 5; // preço fixo base em BRL
+      let precoUnitario = 6; // preço fixo base em BRL
       
       // Regras de ajuste do preço unitário conforme quantidade
       if (quantidade > 40) {
